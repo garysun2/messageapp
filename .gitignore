@@ -1,0 +1,8 @@
+client/node_modules
+server/node_modules
+client/package-lock.json
+client/package.json
+server/.vscode
+server/package-lock.json
+server/package.json
+default.code-workspace
