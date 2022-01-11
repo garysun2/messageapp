@@ -160,10 +160,12 @@ router.post('/sendMessage', async (req, res)=>{
 router.post('/newChatroom',(req, res)=>{
     if(req.user.username){
         const chatroom=new ChatRoomModel({admin: req.user.username, 
-            participants: [{par_id: req.user.username}], messages:[]});
+            participants: [req.user.username], messages:[]});
         chatroom.save().then((savedRoom)=>{
             res.send(savedRoom._id)
-        }).catch((err)=>{res.status(500).json({message: 'failed to save to db'})})
+        }).catch((err)=>{
+            console.log(err)
+            res.status(500).json({message: 'failed to save to db'})})
     }else{
         //remove this after adding loggedIn middlewear
         res.status(500).json({message: 'No user?'})

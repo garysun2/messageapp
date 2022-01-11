@@ -1,10 +1,11 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react'
 import axios from 'axios'
-import {useSelector, shallowEqual} from 'react-redux'
+import {useSelector, shallowEqual, Provider} from 'react-redux'
 import {store} from '../redux/reducers'
-import {switchChat,newChats, newMessages, newInfo} from '../redux/actions'
+import {setUserList, switchChat,newChats, newMessages, newInfo} from '../redux/actions'
 import {Menu} from './menu'
 import {Redirect} from 'react-router-dom'
+import ReactDOM from 'react-dom'
 axios.defaults.withCredentials=true
 
 // TODO: standardize error handling, keep error state in redux store
@@ -52,18 +53,8 @@ function ChatWindow(){
     const [error, setError]=useState({})
     useEffect(()=>{
         //get chats from api
-        function fetchdata(){
-            axios.get('http://localhost:8000/message/chatrooms').then((res)=>{
-                    store.dispatch(newChats(res.data));
-                    if(res.data[0]!=null){
-                        store.dispatch(switchChat(res.data[0]));
-                    }
-                }
-            ).catch((err)=>{
-                setError(err);
-            })
-        }
-        fetchdata();
+        
+        fetchChatrooms();
         console.log(error)
     }  
     ,[])  
@@ -87,12 +78,33 @@ function Error(props){
         <h1>{"Server Error: "+props.error.response.data.message}</h1>
     )   
 }
-
+async function fetchChatrooms(){
+    axios.get('http://localhost:8000/message/chatrooms').then((res)=>{
+            store.dispatch(newChats(res.data));
+            if(res.data[0]!=null){
+                store.dispatch(switchChat(res.data[0]));
+            }
+        }
+    ).catch((err)=>{
+       throw err; 
+    })
+}
 async function fetchParticipants(chatroomid){
     try{
         const res=await axios.get('http://localhost:8000/message/chatroomParticipants',
         {params: {chatroomid: chatroomid}});
         store.dispatch(newInfo(res.data));
+    }catch(err){
+        console.log(err);
+        throw err;
+    }
+}
+
+async function fetchUsers(query){
+    try{
+        const res=await axios.get('http://localhost:8000/message/getUser',
+        {params: {name: query}});
+        store.dispatch(setUserList(res.data));
     }catch(err){
         console.log(err);
         throw err;
@@ -147,6 +159,14 @@ async function poll(chatroomid, controller){
     }
 }
 
+async function addChatroom(){
+    try{
+        const res=await axios.post('http://localhost:8000/message/newChatroom');
+        fetchChatrooms();
+    }catch(err){
+        throw err; 
+    }
+}
 
 function ChatsList(props){
     const chats=useSelector((state)=>state.chats, shallowEqual);
@@ -165,23 +185,112 @@ function ChatsList(props){
        }
     }  
     ,[chats])
+    const onClick=(e)=>{
+        e.preventDefault();
+        try{
+            addChatroom();
+        }catch(err){
+            props.setError(err);
+        }
+    }
 
     return (
-        <div>{(chats&&chats!=[])?chats.map(
-            (item)=>{
-                keycounter++;
-                return <li key={keycounter}><Button setError={props.setError}>{item}</Button></li>}): 'is loading'}
-        </div>
+        <>
+            <div>{(chats&&chats!=[])?chats.map(
+                (item)=>{
+                    keycounter++;
+                    return <li key={keycounter}><Button setError={props.setError}>{item}</Button></li>}): 'is loading'}
+            </div>
+            <button onClick={onClick}>new chatroom</button>
+        </>
     )
+}
+
+const MODAL_STYLES = {
+  position: 'fixed',
+  top: '50%',
+  left: '50%',
+  width: '300px',
+  height: '300px',
+  transform: 'translate(-50%, -50%)',
+  backgroundColor: '#FFF',
+  zIndex: 1000
+}
+
+const OVERLAY_STYLES = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, .7)',
+  zIndex: 1000
+}
+
+
+function UserList(){
+    const userlist=useSelector((state)=>state.userlist);
+    let key=0;
+    return (
+        <>{(userlist && userlist!=[])?userlist.map((item)=>{
+            return <li key={key++}>{item}</li>
+        }):''}</>
+    )
+}
+
+function UserWindow({ open, onClose }) {
+    const [query, setQuery]=useState('');
+    const onSubmit=(e)=>{
+        e.preventDefault();
+        try{
+            if(query&&query!=''){
+                fetchUsers(query);
+            }
+        }catch(err){
+            console.log(err)
+        }
+    }
+  if (!open) return null
+  return ReactDOM.createPortal(
+    <>
+      <div style={OVERLAY_STYLES} />
+      <div style={MODAL_STYLES}>
+        <form className="user-search" onSubmit={onSubmit}>
+            <div className="form-control">
+                <input
+                type='text'
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                />
+            </div>
+            <input type='submit' value='submit' className='btn' />
+        </form>
+        <button onClick={onClose}>Close Modal</button>
+        <UserList/>
+      </div>
+    </>,
+    document.getElementById('portal')
+  )
 }
 
 function AdditionalInfo(props){
     const curParticipants=useSelector((state)=>state.curParticipants);
     var counter=0;
+    const [open, setOpen]=useState(false);
+    const onClose=(e)=>{
+        e.preventDefault();
+        setOpen(false);
+    }
+    const onClick=(e)=>{
+        e.preventDefault();
+        setOpen(true);
+    }
     return (<>curParticipants is 
     {(curParticipants!=null&& curParticipants!=[])?curParticipants.map((item)=>{
         counter++;
         return <li key={counter}>{item}</li>}):'is loading'}
+        <button onClick={onClick}>add user</button>
+        <UserWindow open={open} onClose={onClose}/>
     </>)
 }
 

@@ -1,4 +1,4 @@
-import {combineReducers} from 'redux'
+import {bindActionCreators, combineReducers} from 'redux'
 import {createStore} from 'redux'
 
 const chats=(state=[], action)=>{
@@ -49,5 +49,14 @@ const isLoggedIn=(state=false, action)=>{
     }
 }
 
-const reducer=combineReducers({chats, curChat, curParticipants, curMessages, isLoggedIn});
+const userlist=(state=[],action)=>{
+    switch(action.type){
+        case 'setUserList':
+            return action.payload;
+        default:
+            return state;
+    }
+}
+
+const reducer=combineReducers({userlist, chats, curChat, curParticipants, curMessages, isLoggedIn});
 export const store=createStore(reducer);
