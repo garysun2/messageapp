@@ -37,6 +37,7 @@ const curMessages=(state=[], action)=>{
     }
 }
 
+
 const isLoggedIn=(state=false, action)=>{
     switch(action.type){
         case 'setLoggedIn':

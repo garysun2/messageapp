@@ -25,3 +25,7 @@ export const setLoggedIn=()=>{
 export const unsetLoggedIn=()=>{
     return {type: 'unsetLoggedIn'};
 }
+
+export const newController=(payload)=>{
+    return {type: 'newController', payload: payload};
+}

@@ -41,12 +41,14 @@ var connectionPool={}
 
 router.get('/longpoll', async (req, res)=>{
     //add connection
-    console.log('poll added')
     if(req.query.chatroomid){
+        console.log('poll added')
         if(!Array.isArray(connectionPool[req.query.chatroomid])){
             connectionPool[req.query.chatroomid]=[];
         }
         connectionPool[req.query.chatroomid].push(res);
+    }else{
+        res.status(500).json({type: 'validation',message: 'no chatroomid provided'})
     }
 })
 
