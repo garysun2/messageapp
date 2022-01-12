@@ -59,4 +59,44 @@ const userlist=(state=[],action)=>{
 }
 
 const reducer=combineReducers({userlist, chats, curChat, curParticipants, curMessages, isLoggedIn});
-export const store=createStore(reducer);
+
+
+function loadState() {
+    try {
+        let serializedState = localStorage.getItem("state");
+
+        if (serializedState === null) {
+            return initializeState();
+        }
+
+        return JSON.parse(serializedState);
+    }
+    catch (err) {
+        return initializeState();
+    }
+}
+
+function saveState(state) {
+    try {
+        let serializedState = JSON.stringify(state);
+        localStorage.setItem("state", serializedState);
+    }
+    catch (err) {
+    }
+}
+
+function initializeState() {
+    return{
+        userlist: [], 
+        chats: [], 
+        curChat: '', 
+        curParticipants: [], 
+        curMessages: [], 
+        isLoggedIn: false
+    }
+}
+
+export const store=createStore(reducer, loadState());
+store.subscribe(() => {
+    saveState(store.getState());
+});

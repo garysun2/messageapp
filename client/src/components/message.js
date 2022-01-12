@@ -208,12 +208,11 @@ function ChatsList(props){
 
 const MODAL_STYLES = {
   position: 'fixed',
-  top: '50%',
+    top: '50%',
   left: '50%',
-  width: '300px',
-  height: '300px',
   transform: 'translate(-50%, -50%)',
   backgroundColor: '#FFF',
+  padding: '40px',
   zIndex: 1000
 }
 
@@ -224,19 +223,43 @@ const OVERLAY_STYLES = {
   right: 0,
   bottom: 0,
   backgroundColor: 'rgba(0, 0, 0, .7)',
-  zIndex: 1000
+  zIndex:999 
 }
 
 
-function UserList(){
+
+function UserButton({children, onClose}){
+    const curChat=useSelector((state)=>state.curChat);
+    const onClick=(e)=>{
+        e.preventDefault();
+        // send add participants
+        axios.post('http://localhost:8000/message/addToChatroom/',
+        {params:{chatroomid: curChat, usertoadd: children}}).then(()=>{
+            console.log('here')
+            onClose(e);
+            fetchParticipants(curChat);
+        }).catch((err)=>{
+            console.log(err);
+        })
+        // handle case where the user is not admin
+        // close popup in case where success
+        // and send a fetch participants request
+    }
+    return (
+        <button onClick={onClick}>{children}</button>
+    )
+}
+
+function UserList({onClose}){
     const userlist=useSelector((state)=>state.userlist);
     let key=0;
     return (
         <>{(userlist && userlist!=[])?userlist.map((item)=>{
-            return <li key={key++}>{item}</li>
+            return <li key={key++}><UserButton onClose={onClose}>{item}</UserButton></li>
         }):''}</>
     )
 }
+
 
 function UserWindow({ open, onClose }) {
     const [query, setQuery]=useState('');
@@ -253,7 +276,7 @@ function UserWindow({ open, onClose }) {
   if (!open) return null
   return ReactDOM.createPortal(
     <>
-      <div style={OVERLAY_STYLES} />
+      <div style={OVERLAY_STYLES}/>
       <div style={MODAL_STYLES}>
         <form className="user-search" onSubmit={onSubmit}>
             <div className="form-control">
@@ -266,7 +289,7 @@ function UserWindow({ open, onClose }) {
             <input type='submit' value='submit' className='btn' />
         </form>
         <button onClick={onClose}>Close Modal</button>
-        <UserList/>
+        <UserList onClose={onClose}/>
       </div>
     </>,
     document.getElementById('portal')

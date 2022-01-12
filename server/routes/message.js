@@ -172,18 +172,24 @@ router.post('/newChatroom',(req, res)=>{
     }
 })
 
-router.post('/addToChatroom',async (req, res)=>{
+router.post('/addToChatroom',loggedIn,async (req, res)=>{
+    const chatroomid=req.body.params.chatroomid;
+    const usertoadd=req.body.params.usertoadd;
     try{
-        const result=await ChatRoomModel.findById(req.query.chatroomid)
+        const result=await ChatRoomModel.findById(chatroomid)
         if(result.admin==req.user.username){
             //verify user is indeed an user
-            const isUser=await UserModel.findOne({username: req.query.usertoadd})
+            console.log(result.admin)
+            const isUser=await UserModel.findOne({username: usertoadd})
             if(isUser){
-                result.participants.push({par_id: req.query.usertoadd})
+                for(let participant of result.participants){
+                    if(usertoadd==participant){
+                        return res.status(500).json({message: 'User you are trying to add is already a participant'})
+                    }
+                }
+                result.participants.push(usertoadd)
                 let val=await result.save()
-                res.json(val.participants.map((participant)=>{
-                    return participant.par_id;
-                }))
+                res.json(val.participants)
             }else{
                 res.status(500).json({message: 'not a user'})
             }

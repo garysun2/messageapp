@@ -2,7 +2,7 @@ const express=require('express')
 const router=express.Router()
 const bcrypt=require('bcrypt')
 const {loggedIn,notLoggedIn}=require('./helper')
-const UserModel=require('../models/user.js')
+const {UserModel}=require('../models/user.js')
 const {check,validationResult}=require('express-validator')
 
 module.exports=(passport)=>{
@@ -21,7 +21,7 @@ module.exports=(passport)=>{
     })
     
     router.post('/',
-    [check('username').isLength({ min: 3 ,max: 20}).isAlphanumeric]
+    [check('username').isLength({ min: 3 ,max: 20}).isAlphanumeric()]
     ,notLoggedIn,checkUser,async (req,res)=>{
         try{
             //validator check

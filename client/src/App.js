@@ -6,8 +6,16 @@ import {Message } from './components/message'
 import {Route,Redirect,BrowserRouter,Switch} from 'react-router-dom'
 
 
+
+const globalstyle={
+  position: 'fixed',
+  height: '100vh',
+  width: '100vw'
+}
+
 function App() {
   return (
+    <div style={globalstyle}>
     <BrowserRouter>
       <Switch>
         <Route exact  path='/' component={Home}/>
@@ -18,6 +26,7 @@ function App() {
         <Redirect to='/404'/>
       </Switch>
     </BrowserRouter>
+    </div>
   )
 }
 
